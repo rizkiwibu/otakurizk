@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>otakurizkdesu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <style>
+    :root {
+      --bg-color: #111;
+      --text-color: white;
+    }
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #000;
+      color: #e50914;
+      padding: 20px;
+      font-size: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .container {
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    input[type=text] {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 4px;
+      border: none;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #e50914;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .results {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+    }
+    .anime-card {
+      background: #222;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .anime-card:hover {
+      transform: scale(1.05);
+    }
+    .anime-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .anime-card-title {
+      padding: 10px;
+      font-size: 14px;
+      text-align: center;
+    }
+    .anime-detail {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+    }
+    .anime-detail img {
+      width: 200px;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+    .anime-info {
+      flex: 1;
+    }
+    .episodes {
+      margin-top: 20px;
+    }
+    .episode-link {
+      background: #222;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .episode-link:hover {
+      background: #333;
+    }
+    .player-wrapper {
+      margin-top: 30px;
+      display: none;
+    }
+    .quality-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .quality-item {
+      background: #444;
+      padding: 8px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .quality-item:hover {
+      background: #666;
+    }
+    .notice {
+      margin-top: 10px;
+      color: #ffa500;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+    .disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .mode-toggle {
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    otakurizkdesu
+    <div>
+      <button class="mode-toggle" onclick="toggleMode()">Mode: Gelap</button>
+      <button id="newSearchBtn" onclick="resetAll()" style="display:none">Search Lainnya</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <input type="text" id="searchInput" placeholder="Cari anime...">
+    <button id="searchBtn" onclick="searchAnime()">Cari</button>
+
+    <h2 id="latestHeading" style="margin-top: 30px;">Anime Terbaru</h2>
+    <div class="results" id="results"></div>
+    <div class="anime-detail" id="animeDetail"></div>
+    <div class="episodes" id="episodes"></div>
+    <div class="quality-list" id="qualityList"></div>
+    <div class="notice" id="notice"></div>
+    <div class="player-wrapper" id="playerWrapper">
+      <video id="videoPlayer" playsinline controls data-plyr="{ &quot;controls&quot;: [ 'play-large', 'play', 'rewind', 'fast-forward', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen' ] }"></video>
+    </div>
+  </div>
+
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+  <script>
+    const player = new Plyr('#videoPlayer');
+    const apiKey = 'free';
+
+    document.addEventListener("DOMContentLoaded", loadLatest);
+
+    function toggleMode() {
+      const isDark = document.body.style.getPropertyValue('--bg-color') !== '#fff';
+      document.body.style.setProperty('--bg-color', isDark ? '#fff' : '#111');
+      document.body.style.setProperty('--text-color', isDark ? '#000' : 'white');
+      document.querySelector('.mode-toggle').textContent = `Mode: ${isDark ? 'Cerah' : 'Gelap'}`;
+    }
+
+    function resetAll() {
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('animeDetail').innerHTML = '';
+      document.getElementById('episodes').innerHTML = '';
+      document.getElementById('qualityList').innerHTML = '';
+      document.getElementById('notice').innerHTML = '';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchInput').classList.remove('disabled');
+      document.getElementById('searchBtn').classList.remove('disabled');
+      document.getElementById('newSearchBtn').style.display = 'none';
+      document.getElementById('playerWrapper').style.display = 'none';
+      player.source = { type: 'video', sources: [] };
+    }
+
+    async function loadLatest() {
+      const res = await fetch(`https://restapi.rizk.my.id/samehadaku/latest?apikey=${apiKey}`);
+      const data = await res.json();
+      const resultDiv = document.getElementById('results');
+      resetAll();
+      for (const item of data) {
+        const detailRes = await fetch(`https://restapi.rizk.my.id/samehadaku/detail?url=${encodeURIComponent(item.link)}&apikey=${apiKey}`);
+        const detailData = await detailRes.json();
+        const card = document.createElement('div');
+        card.className = 'anime-card';
+        card.innerHTML = `
+          <img src="${detailData.image}" alt="${item.title}" />
+          <div class="anime-card-title">${item.title}</div>
+        `;
+        card.onclick = () => loadDetail(item.link);
+        resultDiv.appendChild(card);
+      }
+    }
+
+    async function searchAnime() {
+      const text = document.getElementById('searchInput').value;
+      const res = await fetch(`https://restapi.rizk.my.id/samehadaku/search?text=${encodeURIComponent(text)}&apikey=${apiKey}`);
+      const data = await res.json();
+      const resultDiv = document.getElementById('results');
+      resetAll();
+      for (const item of data) {
+        const detailRes = await fetch(`https://restapi.rizk.my.id/samehadaku/detail?url=${encodeURIComponent(item.link)}&apikey=${apiKey}`);
+        const detailData = await detailRes.json();
+        const card = document.createElement('div');
+        card.className = 'anime-card';
+        card.innerHTML = `
+          <img src="${detailData.image}" alt="${item.title}" />
+          <div class="anime-card-title">${item.title}</div>
+        `;
+        card.onclick = () => loadDetail(item.link);
+        resultDiv.appendChild(card);
+      }
+    }
+
+    async function loadDetail(url) {
+      resetAll();
+      const res = await fetch(`https://restapi.rizk.my.id/samehadaku/detail?url=${encodeURIComponent(url)}&apikey=${apiKey}`);
+      const data = await res.json();
+      document.getElementById('animeDetail').innerHTML = `
+        <img src="${data.image}" alt="${data.title}" />
+        <div class="anime-info">
+          <h2>${data.title}</h2>
+          <p>${data.description}</p>
+          <p><strong>Genre:</strong> ${data.genres.join(', ')}</p>
+          <p><strong>Rating:</strong> ${data.rating}</p>
+        </div>
+      `;
+      const episodeList = document.getElementById('episodes');
+      episodeList.innerHTML = '<h3>Episode</h3>';
+      data.episodes.forEach(ep => {
+        const epDiv = document.createElement('div');
+        epDiv.className = 'episode-link';
+        epDiv.textContent = `${ep.title} (${ep.date})`;
+        epDiv.onclick = () => loadPlayer(ep.url);
+        episodeList.appendChild(epDiv);
+      });
+    }
+
+    async function loadPlayer(episodeUrl) {
+      const res = await fetch(`https://restapi.rizk.my.id/samehadaku/download?url=${encodeURIComponent(episodeUrl)}&apikey=${apiKey}`);
+      const data = await res.json();
+      const qualityList = document.getElementById('qualityList');
+      qualityList.innerHTML = '<h3>Pilih Kualitas</h3>';
+      data.unduhan.forEach(item => {
+        const qItem = document.createElement('div');
+        qItem.className = 'quality-item';
+        qItem.textContent = `${item.nama}`;
+        qItem.onclick = () => playVideo(item.tautan);
+        qualityList.appendChild(qItem);
+      });
+      document.getElementById('searchInput').classList.add('disabled');
+      document.getElementById('searchBtn').classList.add('disabled');
+      document.getElementById('newSearchBtn').style.display = 'inline-block';
+    }
+
+    function playVideo(url) {
+      const notice = document.getElementById('notice');
+      if (!url.endsWith('.mp4')) {
+        notice.innerHTML = `Link ini tidak bisa diputar langsung. <br><a href="${url}" target="_blank" style="color: #00f">Buka di browser</a>`;
+        setTimeout(() => {
+          window.open(url, '_blank');
+        }, 1500);
+        return;
+      }
+      notice.innerHTML = '';
+      document.getElementById('playerWrapper').style.display = 'block';
+      player.source = {
+        type: 'video',
+        sources: [{ src: url, type: 'video/mp4' }]
+      };
+      player.play();
+    }
+  </script>
+</body>
+</html>

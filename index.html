@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Downloader by RizkyAPI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #121212;
+      --text: #ffffff;
+      --card: #1e1e1e;
+      --accent: #e50914;
+    }
+
+    [data-theme='light'] {
+      --bg: #ffffff;
+      --text: #000000;
+      --card: #f0f0f0;
+      --accent: #e50914;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: var(--card);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .theme-toggle {
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    main {
+      max-width: 800px;
+      margin: auto;
+      padding: 2rem;
+    }
+
+    input, select, button {
+      padding: 0.7rem;
+      margin: 0.5rem 0;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .thumbnail {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .info {
+      margin-top: 1rem;
+    }
+
+    .info h2 {
+      margin: 0.5rem 0;
+    }
+
+    .download-links a {
+      display: inline-block;
+      margin: 0.3rem 0;
+      text-decoration: none;
+      color: var(--accent);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <header>
+    <div class="logo">YT Downloader</div>
+    <div class="theme-toggle" onclick="toggleTheme()">Ganti Tema</div>
+  </header>
+
+  <main>
+    <h1>Download YouTube Video/Audio</h1>
+    <input type="text" id="ytUrl" placeholder="Masukkan URL YouTube..." />
+    
+    <select id="type">
+      <option value="mp3">Audio (mp3)</option>
+      <option value="mp4">Video (mp4)</option>
+    </select>
+    
+    <select id="quality">
+      <option value="96">96</option>
+      <option value="128">128</option>
+      <option value="256" selected>256</option>
+      <option value="320">320</option>
+      <option value="144">144</option>
+      <option value="240">240</option>
+      <option value="360">360</option>
+      <option value="480">480</option>
+      <option value="720">720</option>
+      <option value="1080">1080</option>
+    </select>
+
+    <input type="text" id="apikey" placeholder="Masukkan API Key..." />
+    <button onclick="fetchDownload()">Dapatkan Link Download</button>
+
+    <div id="result"></div>
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const theme = document.body.getAttribute("data-theme");
+      document.body.setAttribute("data-theme", theme === "dark" ? "light" : "dark");
+    }
+
+    async function fetchDownload() {
+      const url = encodeURIComponent(document.getElementById("ytUrl").value);
+      const type = document.getElementById("type").value;
+      const quality = document.getElementById("quality").value;
+      const apikey = document.getElementById("apikey").value;
+
+      const endpoint = `https://restapi.rizk.my.id/ytdown?url=${url}&format=${type}&quality=${quality}&apikey=${apikey}`;
+      const res = await fetch(endpoint);
+      const data = await res.json();
+
+      if (data.status === "success") {
+        const result = data.result;
+        document.getElementById("result").innerHTML = `
+          <div class="card">
+            <img src="${result.metadata.thumbnail}" class="thumbnail">
+            <div class="info">
+              <h2>${result.title}</h2>
+              <p><strong>Author:</strong> ${result.author.name}</p>
+              <p><strong>Durasi:</strong> ${result.metadata.duration}</p>
+              <p><strong>Views:</strong> ${result.metadata.views}</p>
+              <div class="download-links">
+                <a href="${result.media}" target="_blank">Download (${result.format.toUpperCase()} - ${result.quality}kbps/p)</a>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        document.getElementById("result").innerHTML = `<p style="color:red;">Gagal mengambil data. Periksa URL atau API key.</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
